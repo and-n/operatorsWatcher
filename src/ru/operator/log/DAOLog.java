@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.operator.log;
 
 import java.sql.Connection;
@@ -61,7 +56,7 @@ public class DAOLog {
         end.setMinutes(59);
         end.setSeconds(59);
         end.setNanos(999999);
-        tStart.setTime(tStart.getTime() - 3600000L);
+        tStart.setTime(tStart.getTime() - 7200000L);
         getStates.setTimestamp(1, tStart);
         getStates.setTimestamp(2, end);
         getStates.setString(3, name);
