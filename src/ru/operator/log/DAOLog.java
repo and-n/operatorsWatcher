@@ -48,15 +48,17 @@ public class DAOLog {
     }
 
     public ResultSet getOperatorLog(String name, Calendar date) throws SQLException {
-
-        Timestamp tStart = new Timestamp(date.get(Calendar.YEAR) - 1900, date.get(Calendar.MONTH), date.get(Calendar.DAY_OF_MONTH),
-                0, 0, 0, 1);
+        System.err.println("name " + date);
+//        Timestamp tStart = new Timestamp(date.get(Calendar.YEAR) - 1900, date.get(Calendar.MONTH), date.get(Calendar.DAY_OF_MONTH),
+//                0, 0, 0, 1);
+        Timestamp tStart = new Timestamp(date.getTimeInMillis());
         Timestamp end = new Timestamp(tStart.getTime());
         end.setHours(23);
         end.setMinutes(59);
         end.setSeconds(59);
         end.setNanos(999999);
-        tStart.setTime(tStart.getTime() - 7200000L);
+        tStart.setTime(tStart.getTime() - 21600000L);
+        System.out.println("tsta" + tStart);
         getStates.setTimestamp(1, tStart);
         getStates.setTimestamp(2, end);
         getStates.setString(3, name);

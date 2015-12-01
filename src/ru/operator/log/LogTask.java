@@ -5,6 +5,8 @@
  */
 package ru.operator.log;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -35,13 +37,13 @@ public class LogTask implements Callable<Void> {
         ResultSet rs = daoLog.getOperatorLog(name, day);
         int[] res = parseResult(rs);
         writeToRow(res);
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return null;
     }
 
     private String getInitials(String name) {
         String[] splits = name.split("\\s+");
-        String init = splits[0].toUpperCase().substring(0, 1) + splits[0].toLowerCase().substring(1, splits[0].length())
-                + " " + splits[1].substring(0, 1) + "." + splits[2].substring(0, 1) + ".";
+        String init = splits[1].substring(0, 1) + "." + splits[2].substring(0, 1) + ". "
+                + splits[0].toUpperCase().substring(0, 1) + splits[0].toLowerCase().substring(1, splits[0].length());
         return init;
     }
 
@@ -51,19 +53,69 @@ public class LogTask implements Callable<Void> {
         day.set(Calendar.MINUTE, 0);
         day.set(Calendar.SECOND, 0);
         day.set(Calendar.MILLISECOND, 0);
+        long end = day.getTimeInMillis() + 86400000L;
         long time = day.getTimeInMillis();
         int index = 0;
         boolean isWorked = false;
-        int lastIndex = 0;
-        while (resultSet.next()) {
-            int state = resultSet.getInt(1);
-            Timestamp ts = resultSet.getTimestamp(2);
-            ts.getTime();
+        long lastStateTime = time;
+        long workTime = 0;
+        if (resultSet.next()) {
+            while (time < end) {
+
+                Pair<Boolean, Long> state = getState(resultSet);
+                if (state.getR() < time) {
+                    isWorked = state.getL();
+                    if (resultSet.next()) {
+                        continue;
+                    } else {
+                        break;
+                    }
+                } else {
+                    if (state.getR() > time + 300000) {
+                        if (lastStateTime <= time) {
+                            fiveMinutesRes[index] = isWorked ? 5 : 0;
+                        } else {
+                            if (state.getL()) {
+                                BigDecimal bd = new BigDecimal(state.getR()).subtract(new BigDecimal(time)).add(new BigDecimal(workTime)).divide(new BigDecimal(60000), 2, RoundingMode.UP);
+                                if (bd.intValue() > 5) {
+                                    System.out.println("MORE 5 " + workTime);
+                                }
+                                fiveMinutesRes[index] = bd.intValue();
+                                workTime = 0;
+                            } else {
+                                BigDecimal bd = new BigDecimal(workTime).divide(new BigDecimal(60000), 2, RoundingMode.UP);
+                                fiveMinutesRes[index] = bd.intValue();
+                                workTime = 0;
+                            }
+                        }
+                        time = time + 300000;
+                        index++;
+                    } else {
+                        if (lastStateTime > time) {
+                            workTime = state.getL() ? workTime : workTime + (state.getR() - lastStateTime);
+                        } else {
+                            workTime = state.getL() ? 0 : state.getR() - time;
+                        }
+                        lastStateTime = state.getR();
+                        isWorked = state.getL();
+                        if (resultSet.next()) {
+                            continue;
+                        } else {
+                            BigDecimal bd = new BigDecimal(workTime).divide(new BigDecimal(60000), 2, RoundingMode.UP);
+                            fiveMinutesRes[index] = bd.intValue();
+                            workTime = 0;
+                            index++;
+                            break;
+                        }
+                    }
+//                    time = time + 300000;
+//                    index++;
+                }
+            }
         }
         for (; index < 288; index++) {
             fiveMinutesRes[index] = isWorked ? 5 : 0;
         }
-
         return fiveMinutesRes;
     }
 
@@ -71,10 +123,20 @@ public class LogTask implements Callable<Void> {
         for (int i = 0; i < values.length; i++) {
             Cell c = row.getCell(i + 1);
             if (c == null) {
-                c = row.createCell(i++);
+                c = row.createCell(i + 1);
             }
             c.setCellValue(values[i]);
         }
+    }
+
+    private Pair<Boolean, Long> getState(ResultSet resultSet) throws SQLException {
+        int state = resultSet.getInt(1);
+        Timestamp ts = resultSet.getTimestamp(2);
+        Boolean b = state == 1;
+        Long l = new Long(ts.getTime());
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(l);
+        return new Pair(b, l);
     }
 
 }
