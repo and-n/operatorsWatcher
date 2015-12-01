@@ -72,7 +72,7 @@ public class LogTask implements Callable<Void> {
                     }
                 } else {
                     if (state.getR() > time + 300000) {
-                        if (lastStateTime <= time) {
+                        if (lastStateTime < time) {
                             fiveMinutesRes[index] = isWorked ? 5 : 0;
                         } else {
                             if (state.getL()) {
@@ -95,6 +95,7 @@ public class LogTask implements Callable<Void> {
                             workTime = state.getL() ? workTime : workTime + (state.getR() - lastStateTime);
                         } else {
                             workTime = state.getL() ? 0 : state.getR() - time;
+                            System.err.println("WT " + (state.getR() > time + 300000));
                         }
                         lastStateTime = state.getR();
                         isWorked = state.getL();
