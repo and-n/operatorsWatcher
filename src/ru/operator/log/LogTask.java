@@ -61,7 +61,6 @@ public class LogTask implements Callable<Void> {
         long workTime = 0;
         if (resultSet.next()) {
             while (time < end) {
-
                 Pair<Boolean, Long> state = getState(resultSet);
                 if (state.getR() < time) {
                     isWorked = state.getL();
