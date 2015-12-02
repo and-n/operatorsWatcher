@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.operator.log;
 
 import java.math.BigDecimal;
@@ -11,7 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Calendar;
-import java.util.concurrent.Callable;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 
@@ -19,7 +13,7 @@ import org.apache.poi.ss.usermodel.Row;
  *
  * @author Andrey
  */
-public class LogTask implements Callable<Void> {
+public class LogTask {
 
     private Calendar day;
     private Row row;
@@ -31,7 +25,7 @@ public class LogTask implements Callable<Void> {
         daoLog = dao;
     }
 
-    @Override
+//    @Override
     public Void call() throws Exception {
         String name = getInitials(row.getCell(0).getStringCellValue());
         ResultSet rs = daoLog.getOperatorLog(name, day);
@@ -71,18 +65,23 @@ public class LogTask implements Callable<Void> {
                     }
                 } else {
                     if (state.getR() > time + 300000) {
-                        if (lastStateTime < time) {
+                        if (lastStateTime <= time) {
                             fiveMinutesRes[index] = isWorked ? 5 : 0;
                         } else {
                             if (state.getL()) {
-                                BigDecimal bd = new BigDecimal(state.getR()).subtract(new BigDecimal(time)).add(new BigDecimal(workTime)).divide(new BigDecimal(60000), 2, RoundingMode.UP);
-                                if (bd.intValue() > 5) {
-                                    System.out.println("MORE 5 " + workTime);
-                                }
+//                                BigDecimal bd = new BigDecimal(state.getR())
+//                                        .subtract(new BigDecimal(time)).add(new BigDecimal(workTime))
+//                                        .divide(new BigDecimal(60000), 2, RoundingMode.UP);
+//                                if (bd.intValue() > 5) {
+//                                    System.out.println("MORE 5 " + workTime + " state " + state.getR() + " time " + time);
+//                                }
+                                BigDecimal bd = new BigDecimal(workTime)
+                                        .divide(new BigDecimal(60000), 2, RoundingMode.UP);
                                 fiveMinutesRes[index] = bd.intValue();
                                 workTime = 0;
                             } else {
-                                BigDecimal bd = new BigDecimal(workTime).divide(new BigDecimal(60000), 2, RoundingMode.UP);
+                                BigDecimal bd = new BigDecimal(workTime)
+                                        .divide(new BigDecimal(60000), 2, RoundingMode.UP);
                                 fiveMinutesRes[index] = bd.intValue();
                                 workTime = 0;
                             }
@@ -92,16 +91,18 @@ public class LogTask implements Callable<Void> {
                     } else {
                         if (lastStateTime > time) {
                             workTime = state.getL() ? workTime : workTime + (state.getR() - lastStateTime);
+//                            System.err.println("WT IF" + (state.getR() > time + 300000) + " " + workTime);
                         } else {
                             workTime = state.getL() ? 0 : state.getR() - time;
-                            System.err.println("WT " + (state.getR() > time + 300000));
+//                            System.err.println("WT else " + (state.getR() > time + 300000) + " " + workTime);
                         }
                         lastStateTime = state.getR();
                         isWorked = state.getL();
                         if (resultSet.next()) {
                             continue;
                         } else {
-                            BigDecimal bd = new BigDecimal(workTime).divide(new BigDecimal(60000), 2, RoundingMode.UP);
+                            BigDecimal bd = new BigDecimal(workTime)
+                                    .divide(new BigDecimal(60000), 2, RoundingMode.UP);
                             fiveMinutesRes[index] = bd.intValue();
                             workTime = 0;
                             index++;

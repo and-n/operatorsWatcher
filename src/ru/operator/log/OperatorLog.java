@@ -19,7 +19,10 @@ public class OperatorLog {
         Calendar start = Calendar.getInstance();
         Calendar end = Calendar.getInstance();
         try {
-            if (args.length == 1) {
+            if (args.length == 0) {
+                start.setTimeInMillis(start.getTimeInMillis() - 86400000L);
+                end = start;
+            } else if (args.length == 1) {
                 String s = args[0].trim();
                 start.setTime(df1.parse(s));
                 end = start;
@@ -28,6 +31,7 @@ public class OperatorLog {
                 start.setTime(df1.parse(args[0].trim()));
                 end.setTime(df1.parse(args[1].trim()));
             } else {
+                System.out.println("Не заданы даты расчета");
                 System.exit(1);
             }
         } catch (ParseException p) {

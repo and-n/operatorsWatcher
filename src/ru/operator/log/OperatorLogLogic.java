@@ -6,11 +6,13 @@
 package ru.operator.log;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -34,22 +36,24 @@ public class OperatorLogLogic {
     public void action(Calendar start, Calendar end) {
         try {
             fc = new FileCreator();
-
             createThreads(start, end);
-        } catch (IOException ex) {
+        } catch (IOException | ExecutionException | InterruptedException ex) {
             Logger.getLogger(OperatorLogLogic.class
                     .getName()).log(Level.SEVERE, null, ex);
+            System.exit(2);
         } catch (Exception ex) {
             Logger.getLogger(OperatorLogLogic.class.getName()).log(Level.SEVERE, null, ex);
+            System.exit(2);
         }
-
-        fc.saveFile("LogIN-" + df1.format(start.getTime()));
+        String fileName = "LogIN " + df1.format(start.getTime());
+        fileName = start.equals(end) ? fileName : fileName + "-" + df1.format(end.getTime());
+        fc.saveFile(fileName);
 
     }
 
-    private void createThreads(Calendar date1, Calendar date2) throws Exception {
-        ExecutorService executor = Executors.newFixedThreadPool(4);
-        List<Future<Void>> flist = new ArrayList<>();
+    private void createThreads(Calendar date1, Calendar date2) throws ExecutionException, InterruptedException, Exception {
+//        ExecutorService executor = Executors.newFixedThreadPool(4);
+//        List<Future<Void>> flist = new ArrayList<>();
         Calendar d = Calendar.getInstance();
         d.setTimeInMillis(date1.getTimeInMillis());
         for (; d.before(date2) || d.equals(date2);) {
@@ -66,7 +70,8 @@ public class OperatorLogLogic {
                     Calendar cal = Calendar.getInstance();
                     cal.setTimeInMillis(d.getTimeInMillis());
                     LogTask lt = new LogTask(cal, r, dao);
-                    flist.add(executor.submit(lt));
+                    lt.call();
+//                    flist.add(executor.submit(lt));
                 } else {
                     break;
                 }
@@ -75,10 +80,11 @@ public class OperatorLogLogic {
             d.setTimeInMillis(d.getTimeInMillis() + 86400000L);
 
         }
-        for (Future future : flist) {
-            future.get();
-        }
-        executor.shutdown();
+//        for (Future future : flist) {
+//            future.get();
+//        }
+//        executor.shutdown();
+
     }
 
 }

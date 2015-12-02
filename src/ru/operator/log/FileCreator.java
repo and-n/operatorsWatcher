@@ -26,8 +26,8 @@ public class FileCreator implements IFileCreator {
 
     public FileCreator() throws IOException {
         File f = new File("temp" + File.separator + "Сетка.xlsx");
-        XSSFWorkbook template
-                = new XSSFWorkbook(new FileInputStream(f));
+//        XSSFWorkbook template
+//                = new XSSFWorkbook(new FileInputStream(f));
         wb = new XSSFWorkbook(new FileInputStream(f));
     }
 
@@ -38,6 +38,7 @@ public class FileCreator implements IFileCreator {
         try (FileOutputStream fos = new FileOutputStream(f + File.separator + fileName + ".xlsx", false)) {
             wb.removeSheetAt(0);
             wb.write(fos);
+            System.out.println("Save " + f + File.separator + fileName + ".xlsx");
         } catch (FileNotFoundException ex) {
             Logger.getLogger(FileCreator.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
